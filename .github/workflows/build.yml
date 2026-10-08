@@ -22,28 +22,54 @@ jobs:
           PROJECT_FILE=$(find folder_game/ -name "project.godot" | head -n 1)
           
           if [ -z "$PROJECT_FILE" ]; then
-            echo "GAGAL: File project.godot tidak ditemukan di dalam ZIP!"
-            echo "Pastikan kamu me-zip folder game yang benar."
+            echo "GAGAL: File project.godot tidak ditemukan!"
             exit 1
           fi
           
           PROJECT_DIR=$(dirname "$PROJECT_FILE")
-          echo "Game ditemukan di dalam folder: $PROJECT_DIR"
-          
-          echo "3. Masuk ke folder game..."
+          echo "3. Masuk ke folder game: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           mkdir -p hasil_apk
           
-          echo "4. Membuat Kunci Android (Keystore)..."
+          echo "4. Memaksa penulisan file export_presets.cfg otomatis..."
+          cat <<EOF > export_presets.cfg
+          [preset.0]
+          name="Android"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="hasil_apk/game.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+          
+          [preset.0.options]
+          custom_template/debug=""
+          custom_template/release=""
+          architectures/armeabi-v7a=true
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug="debug.keystore"
+          keystore/debug_user="android"
+          keystore/debug_password="android"
+          EOF
+          
+          echo "5. Membuat Kunci Android (Keystore)..."
           keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
           
-          echo "5. Menyiapkan Aset Godot..."
+          echo "6. Menyiapkan Aset Godot..."
           godot --headless --editor --quit || true
           
-          echo "6. Merakit menjadi APK..."
+          echo "7. Merakit menjadi APK..."
           godot --headless --export-debug "Android" hasil_apk/game.apk
           
-          echo "7. Memindahkan APK ke folder akhir..."
+          echo "8. Memindahkan APK ke folder akhir..."
           cd - 
           mkdir -p siap_download
           cp "$PROJECT_DIR/hasil_apk/game.apk" siap_download/
