@@ -15,6 +15,9 @@ jobs:
 
       - name: Ekstrak dan Build APK
         run: |
+          # PENTING: Memaksa GitHub menggunakan folder asli yang berisi Java SDK dan Template Godot
+          export HOME=/root
+          
           echo "1. Mengekstrak file ZIP..."
           unzip tp-drift-upgraded.zip -d folder_game/
           
