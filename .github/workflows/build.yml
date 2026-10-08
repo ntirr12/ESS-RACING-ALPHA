@@ -1,0 +1,43 @@
+name: Build APK Godot 4
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  export-android:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.7.2 
+    steps:
+      - name: Ambil File dari GitHub
+        uses: actions/checkout@v4
+
+      - name: Ekstrak ZIP
+        run: |
+          # Mengekstrak zip ke folder sementara
+          unzip tp-drift-upgraded.zip -d temp_extract/
+          
+      - name: Proses Export ke APK
+        run: |
+          # 1. Buat folder hasil di luar agar tidak terselip
+          mkdir -p /github/workspace/hasil_apk
+          
+          # 2. Cari otomatis lokasi file project.godot berada dan pindah ke sana
+          PROJECT_PATH=$(dirname $(find /github/workspace/temp_extract/ -name "project.godot" | head -n 1))
+          cd "$PROJECT_PATH"
+          
+          # 3. Buat kunci Android
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+          
+          # 4. Baca aset game
+          godot --headless --editor --quit || true
+          
+          # 5. Export menjadi APK ke folder hasil yang sudah disiapkan
+          godot --headless --export-debug "Android" /github/workspace/hasil_apk/game.apk
+
+      - name: Simpan APK agar bisa didownload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESS-RACING-ALPHA
+          path: /github/workspace/hasil_apk/
