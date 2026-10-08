@@ -15,8 +15,10 @@ jobs:
 
       - name: Ekstrak dan Build APK
         run: |
-          # PENTING: Memaksa GitHub menggunakan folder asli yang berisi Java SDK dan Template Godot
           export HOME=/root
+          
+          # Memperbaiki error libfontconfig yang merah-merah tadi
+          apt-get update && apt-get install -y fontconfig
           
           echo "1. Mengekstrak file ZIP..."
           unzip tp-drift-upgraded.zip -d folder_game/
@@ -59,7 +61,7 @@ jobs:
           architectures/x86=false
           architectures/x86_64=false
           keystore/debug="debug.keystore"
-          keystore/debug_user="android"
+          keystore/debug_user="androiddebugkey" 
           keystore/debug_password="android"
           EOF
           
