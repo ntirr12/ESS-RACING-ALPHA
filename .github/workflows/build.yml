@@ -1,0 +1,55 @@
+name: Build APK Godot 4
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  export-android:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.7.2 
+    steps:
+      - name: Ambil File dari GitHub
+        uses: actions/checkout@v4
+
+      - name: Ekstrak dan Build APK
+        run: |
+          echo "1. Mengekstrak file ZIP..."
+          unzip tp-drift-upgraded.zip -d folder_game/
+          
+          echo "2. Mencari file project.godot..."
+          PROJECT_FILE=$(find folder_game/ -name "project.godot" | head -n 1)
+          
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "GAGAL: File project.godot tidak ditemukan di dalam ZIP!"
+            echo "Pastikan kamu me-zip folder game yang benar."
+            exit 1
+          fi
+          
+          PROJECT_DIR=$(dirname "$PROJECT_FILE")
+          echo "Game ditemukan di dalam folder: $PROJECT_DIR"
+          
+          echo "3. Masuk ke folder game..."
+          cd "$PROJECT_DIR"
+          mkdir -p hasil_apk
+          
+          echo "4. Membuat Kunci Android (Keystore)..."
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+          
+          echo "5. Menyiapkan Aset Godot..."
+          godot --headless --editor --quit || true
+          
+          echo "6. Merakit menjadi APK..."
+          godot --headless --export-debug "Android" hasil_apk/game.apk
+          
+          echo "7. Memindahkan APK ke folder akhir..."
+          cd - 
+          mkdir -p siap_download
+          cp "$PROJECT_DIR/hasil_apk/game.apk" siap_download/
+
+      - name: Sediakan File untuk Diunduh
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESS-RACING-ALPHA
+          path: siap_download/
